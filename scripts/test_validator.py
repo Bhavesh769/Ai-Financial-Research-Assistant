@@ -42,9 +42,8 @@ def main():
     print(result2)
 
 
-    # --------------------------------------------------
     # TEST 3: Company comparison
-    # --------------------------------------------------
+
 
     query3 = FinancialQuery(
         intent="comparison",
@@ -61,9 +60,8 @@ def main():
     print(result3)
 
 
-    # --------------------------------------------------
     # TEST 4: Time-period comparison / trend
-    # --------------------------------------------------
+   
 
     query4 = FinancialQuery(
         intent="trend_analysis",
@@ -80,9 +78,7 @@ def main():
     print(result4)
 
 
-    # --------------------------------------------------
     # TEST 5: Invalid company comparison
-    # --------------------------------------------------
 
     query5 = FinancialQuery(
         intent="comparison",
