@@ -20,6 +20,16 @@ Rules:
 - When a financial number is available, preserve its exact value and unit.
 - Mention the relevant period when applicable.
 
+For comparison questions, compare equivalent financial measures only.
+
+If both reported growth and constant-currency (CC) growth are available,
+compare reported growth with reported growth and CC growth with CC growth.
+
+Never compare a reported figure from one company with a CC figure from
+another company.
+
+If both measures are available, clearly show both comparisons.
+
 Context:
 {context}
 
