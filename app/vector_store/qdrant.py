@@ -1,3 +1,5 @@
+import uuid
+
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -39,6 +41,7 @@ class QdrantStore:
         chunks: list[str],
         embeddings,
         document_id: str,
+        company: str,
     ):
         points = []
 
@@ -51,8 +54,15 @@ class QdrantStore:
                 values=[float(v) for v in sparse_dict.values()],
             )
 
+            point_id = str(
+                uuid.uuid5(
+                    uuid.NAMESPACE_DNS,
+                    f"{document_id}_{i}",
+                )
+            )
+
             point = PointStruct(
-                id=i,
+                id=point_id,
 
                 vector={
                     "dense": embeddings["dense_vecs"][i].tolist(),
@@ -62,6 +72,7 @@ class QdrantStore:
                 payload={
                     "text": chunk,
                     "document_id": document_id,
+                    "company": company,
                     "chunk_index": i,
                 },
             )
