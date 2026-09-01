@@ -1,4 +1,9 @@
-from qdrant_client.models import Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Filter,
+    FieldCondition,
+    MatchValue,
+    SparseVector,
+)
 
 
 def hybrid_search(
@@ -10,112 +15,142 @@ def hybrid_search(
     company=None,
 ):
     """
-    Perform dense + sparse search and combine results using RRF.
+    Perform dense + sparse retrieval and combine results
+    using Reciprocal Rank Fusion.
 
-    If company is provided, only chunks belonging to that
-    company are searched.
+    If company is supplied, retrieval is restricted to
+    that canonical company.
     """
 
-    # --------------------------------------------------
+    # ============================================================
     # 1. Generate query embeddings
-    # --------------------------------------------------
+    # ============================================================
 
-    embeddings = embedder.encode([query])
+    embeddings = embedder.encode(
+        [query]
+    )
 
-    dense_vector = embeddings["dense_vecs"][0]
+    dense_vector = embeddings[
+        "dense_vecs"
+    ][0]
 
-    sparse_dict = embeddings["lexical_weights"][0]
+    sparse_dict = embeddings[
+        "lexical_weights"
+    ][0]
 
     sparse_indices = [
-        int(k) for k in sparse_dict.keys()
+        int(k)
+        for k in sparse_dict.keys()
     ]
 
     sparse_values = [
-        float(v) for v in sparse_dict.values()
+        float(v)
+        for v in sparse_dict.values()
     ]
 
-    # --------------------------------------------------
-    # 2. Create company filter if requested
-    # --------------------------------------------------
+    # ============================================================
+    # 2. Company filter
+    # ============================================================
 
     query_filter = None
 
     if company:
+
         query_filter = Filter(
             must=[
                 FieldCondition(
                     key="company",
-                    match=MatchValue(value=company),
+                    match=MatchValue(
+                        value=company
+                    ),
                 )
             ]
         )
 
-    # --------------------------------------------------
+    # ============================================================
     # 3. Dense search
-    # --------------------------------------------------
+    # ============================================================
 
-    dense_results = store.get_client().query_points(
-        collection_name=collection_name,
-        query=dense_vector.tolist(),
-        using="dense",
-        query_filter=query_filter,
-        limit=limit,
-        with_payload=True,
-    ).points
+    dense_results = (
+        store.get_client()
+        .query_points(
+            collection_name=collection_name,
+            query=dense_vector.tolist(),
+            using="dense",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+        .points
+    )
 
-    # --------------------------------------------------
+    # ============================================================
     # 4. Sparse search
-    # --------------------------------------------------
-
-    from qdrant_client.models import SparseVector
+    # ============================================================
 
     sparse_vector = SparseVector(
         indices=sparse_indices,
         values=sparse_values,
     )
 
-    sparse_results = store.get_client().query_points(
-        collection_name=collection_name,
-        query=sparse_vector,
-        using="sparse",
-        query_filter=query_filter,
-        limit=limit,
-        with_payload=True,
-    ).points
+    sparse_results = (
+        store.get_client()
+        .query_points(
+            collection_name=collection_name,
+            query=sparse_vector,
+            using="sparse",
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+        )
+        .points
+    )
 
-    # --------------------------------------------------
-    # 5. Calculate RRF
-    # --------------------------------------------------
+    # ============================================================
+    # 5. Reciprocal Rank Fusion
+    # ============================================================
 
     rrf_scores = {}
 
     k = 60
 
-    for rank, result in enumerate(dense_results):
+    for rank, result in enumerate(
+        dense_results
+    ):
+
         point_id = str(result.id)
 
         if point_id not in rrf_scores:
+
             rrf_scores[point_id] = {
                 "score": 0.0,
                 "result": result,
             }
 
-        rrf_scores[point_id]["score"] += 1 / (k + rank + 1)
+        rrf_scores[point_id]["score"] += (
+            1 / (k + rank + 1)
+        )
 
-    for rank, result in enumerate(sparse_results):
+    for rank, result in enumerate(
+        sparse_results
+    ):
+
         point_id = str(result.id)
 
         if point_id not in rrf_scores:
+
             rrf_scores[point_id] = {
                 "score": 0.0,
                 "result": result,
             }
 
-        rrf_scores[point_id]["score"] += 1 / (k + rank + 1)
+        rrf_scores[point_id]["score"] += (
+            1 / (k + rank + 1)
+        )
 
-    # --------------------------------------------------
-    # 6. Sort by RRF score
-    # --------------------------------------------------
+    # ============================================================
+    # 6. Rank results
+    # ============================================================
 
     ranked_results = sorted(
         rrf_scores.values(),
@@ -123,9 +158,9 @@ def hybrid_search(
         reverse=True,
     )
 
-    # --------------------------------------------------
-    # 7. Return final results
-    # --------------------------------------------------
+    # ============================================================
+    # 7. Final results
+    # ============================================================
 
     final_results = []
 

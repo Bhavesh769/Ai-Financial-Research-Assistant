@@ -2,7 +2,16 @@ import json
 import requests
 
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+import os
+
+OLLAMA_URL = (
+    os.getenv(
+        "OLLAMA_URL",
+        "http://localhost:11434",
+    ).rstrip("/")
+    + "/api/generate"
+)
+
 MODEL_NAME = "llama3:latest"
 
 
