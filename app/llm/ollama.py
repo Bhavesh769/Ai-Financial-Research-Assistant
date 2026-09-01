@@ -1,8 +1,14 @@
+import os
 import requests
 
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = os.getenv(
+    "OLLAMA_URL",
+    "http://localhost:11434",
+).rstrip("/") + "/api/generate"
+
 MODEL_NAME = "llama3:latest"
+
 
 def generate_answer(query: str, context: str) -> str:
 
