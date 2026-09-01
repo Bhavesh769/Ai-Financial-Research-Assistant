@@ -1,0 +1,33 @@
+# API
+fastapi
+uvicorn[standard]
+python-multipart
+requests
+
+# LLM / LangGraph
+langgraph
+langchain
+langchain-community
+langchain-core
+langchain-ollama
+ollama
+
+# Vector database
+qdrant-client
+
+# Embeddings
+FlagEmbedding
+torch
+transformers
+sentencepiece
+
+# PDF / document parsing
+docling
+
+# Data / validation
+pydantic
+pydantic-settings
+python-dotenv
+
+# Utilities
+numpy
